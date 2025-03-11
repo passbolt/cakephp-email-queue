@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['7.4', '8.0', '8.1', '8.2']
+        php-version: ['8.2', '8.3', '8.4']
         db-type: [sqlite, mysql]
         prefer-lowest: ['', 'prefer-lowest']
 
@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.0']
+        php-version: ['8.2']
 
     steps:
     - uses: actions/checkout@v3
