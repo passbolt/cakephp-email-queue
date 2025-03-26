@@ -1,29 +1,27 @@
 <?php
 declare(strict_types=1);
 
-namespace EmailQueue\Shell;
+namespace EmailQueue\Command;
 
+use Cake\Command\Command;
+use Cake\Console\Arguments;
+use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
-use Cake\Console\Shell;
 use Cake\Core\Configure;
 use Cake\Mailer\Mailer;
 use Cake\Network\Exception\SocketException;
 use Cake\ORM\TableRegistry;
+use Cake\Utility\Hash;
 use EmailQueue\Model\Table\EmailQueueTable;
 
-class SenderShell extends Shell
+class SenderCommand extends Command
 {
     /**
-     * Gets the option parser instance and configures it.
-     *
-     * By overriding this method you can configure the ConsoleOptionParser before returning it.
-     *
-     * @return \Cake\Console\ConsoleOptionParser
-     * @link https://book.cakephp.org/3.0/en/console-and-shells.html#configuring-options-and-generating-help
+     * @inheritDoc
      */
-    public function getOptionParser(): ConsoleOptionParser
+    public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
-        $parser = parent::getOptionParser();
+        $parser = parent::buildOptionParser($parser);
         $parser
             ->setDescription('Sends queued emails in a batch')
             ->addOption(
@@ -31,7 +29,7 @@ class SenderShell extends Shell
                 [
                 'short' => 'l',
                 'help' => 'How many emails should be sent in this batch?',
-                'default' => 50,
+                'default' => '50',
                 ]
             )
             ->addOption(
@@ -65,37 +63,30 @@ class SenderShell extends Shell
                 'help' => 'Name of email settings to use as defined in email.php',
                 'default' => 'default',
                 ]
-            )
-            ->addSubCommand(
-                'clearLocks',
-                [
-                'help' => 'Clears all locked emails in the queue, useful for recovering from crashes',
-                ]
             );
 
         return $parser;
     }
 
     /**
-     * Sends queued emails.
-     *
-     * @return void
+     * @inheritDoc
      */
-    public function main(): void
+    public function execute(Arguments $args, ConsoleIo $io): ?int
     {
-        if ($this->params['stagger']) {
-            sleep(rand(0, $this->params['stagger']));
+        $stagger = $args->getOption('stagger');
+        if (is_string($stagger)) {
+            sleep(rand(0, (int)$stagger));
         }
 
         Configure::write('App.baseUrl', '/');
         $emailQueue = TableRegistry::getTableLocator()->get('EmailQueue', ['className' => EmailQueueTable::class]);
-        $emails = $emailQueue->getBatch($this->params['limit']);
+        $emails = $emailQueue->getBatch((int)$args->getOption('limit'));
 
         $count = count($emails);
         foreach ($emails as $e) {
-            $configName = $e->config === 'default' ? $this->params['config'] : $e->config;
-            $template = $e->template === 'default' ? $this->params['template'] : $e->template;
-            $layout = $e->layout === 'default' ? $this->params['layout'] : $e->layout;
+            $configName = $e->config === 'default' ? $args->getOption('config') : $e->config;
+            $template = $e->template === 'default' ? $args->getOption('template') : $e->template;
+            $layout = $e->layout === 'default' ? $args->getOption('layout') : $e->layout;
             $headers = empty($e->headers) ? [] : (array)$e->headers;
             $theme = empty($e->theme) ? '' : (string)$e->theme;
             $viewVars = empty($e->template_vars) ? [] : $e->template_vars;
@@ -135,35 +126,25 @@ class SenderShell extends Shell
 
                 $email->deliver();
             } catch (SocketException $exception) {
-                $this->err($exception->getMessage());
+                $io->err($exception->getMessage());
                 $errorMessage = $exception->getMessage();
                 $sent = false;
             }
 
             if ($sent) {
                 $emailQueue->success($e->id);
-                $this->out('<success>Email ' . $e->id . ' was sent</success>');
+                $io->out('<success>Email ' . $e->id . ' was sent</success>');
             } else {
                 $emailQueue->fail($e->id, $errorMessage);
-                $this->out('<error>Email ' . $e->id . ' was not sent</error>');
+                $io->out('<error>Email ' . $e->id . ' was not sent</error>');
             }
         }
         if ($count > 0) {
-            $locks = collection($emails)->extract('id')->toList();
+            $locks = Hash::extract($emails, '{n}.id');
             $emailQueue->releaseLocks($locks);
         }
-    }
 
-    /**
-     * Clears all locked emails in the queue, useful for recovering from crashes.
-     *
-     * @return void
-     */
-    public function clearLocks(): void
-    {
-        TableRegistry::getTableLocator()
-            ->get('EmailQueue', ['className' => EmailQueueTable::class])
-            ->clearLocks();
+        return self::CODE_SUCCESS;
     }
 
     /**
@@ -172,7 +153,7 @@ class SenderShell extends Shell
      * @param array|string $config array of configs, or string to load configs from app.php
      * @return \Cake\Mailer\Mailer
      */
-    protected function _newEmail($config): Mailer
+    protected function _newEmail(array|string $config): Mailer
     {
         return new Mailer($config);
     }

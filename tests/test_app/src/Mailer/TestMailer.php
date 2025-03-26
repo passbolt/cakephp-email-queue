@@ -18,7 +18,7 @@ class TestMailer extends Mailer
      * @param string $content
      * @return array
      */
-    public function deliver(string $content = '')
+    public function deliver(string $content = ''): array
     {
         return $this->getTransport()->send($this->message);
     }

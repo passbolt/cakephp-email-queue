@@ -9,14 +9,14 @@ use Cake\TestSuite\Fixture\TestFixture;
  */
 class EmailQueueFixture extends TestFixture
 {
-    public $table = 'email_queue';
+    public string $table = 'email_queue';
 
     /**
      * Records.
      *
      * @var array
      */
-    public $records = [
+    public array $records = [
         [
             'id' => '1',
             'email' => 'example@example.com',
@@ -26,7 +26,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',
@@ -46,7 +46,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',
@@ -66,7 +66,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',
@@ -86,7 +86,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',
@@ -106,7 +106,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',
@@ -126,7 +126,7 @@ class EmailQueueFixture extends TestFixture
             'config' => 'default',
             'template' => 'default',
             'layout' => 'default',
-            'theme' => 'default',
+            'theme' => '',
             'format' => 'both',
             'template_vars' => '{"a":1,"b":2}',
             'headers' => '{"foo":"bar"}',

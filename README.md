@@ -9,7 +9,7 @@ email templates and watching the result.
 
 ## Requirements ##
 
-* CakePHP 4.x
+* CakePHP 5.x
 
 ## Installation ##
 
@@ -88,6 +88,12 @@ read available options
 
 You can configure this command to be run under a cron or any other tool
 you wish to use.
+
+### Unlocking emails
+
+Clears all locked emails in the queue, useful for recovering from crashes.
+
+	# bin/cake clear_locks
 
 # Contributing
 

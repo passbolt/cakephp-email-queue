@@ -1,57 +1,57 @@
 <?php
 declare(strict_types=1);
 
-namespace EmailQueue\Shell;
+namespace EmailQueue\Command;
 
-use Cake\Console\Shell;
+use Cake\Command\Command;
+use Cake\Console\Arguments;
+use Cake\Console\ConsoleIo;
 use Cake\Core\Configure;
 use Cake\Mailer\Mailer;
+use Cake\Mailer\Transport\DebugTransport;
 use Cake\ORM\TableRegistry;
 use EmailQueue\Model\Table\EmailQueueTable;
 
-class PreviewShell extends Shell
+class PreviewCommand extends Command
 {
     /**
-     * Main
-     *
-     * @return void
+     * @inheritDoc
      */
-    public function main()
+    public function execute(Arguments $args, ConsoleIo $io): ?int
     {
         Configure::write('App.baseUrl', '/');
 
         $conditions = [];
-        if ($this->args) {
-            $conditions['id IN'] = $this->args;
+        if (!empty($args->getArguments())) {
+            $conditions['id IN'] = $args->getArguments();
         }
 
         $emailQueue = TableRegistry::getTableLocator()->get('EmailQueue', ['className' => EmailQueueTable::class]);
-        $emails = $emailQueue->find()->where($conditions)->all()->toList();
+        $emails = $emailQueue->find()->where($conditions)->disableHydration()->all()->toList();
 
         if (!$emails) {
-            $this->out('No emails found');
-
-            return;
+            return $io->success('No emails found');
         }
 
-        $this->clear();
         foreach ($emails as $i => $email) {
             if ($i) {
-                $this->in('Hit a key to continue');
-                $this->clear();
+                $io->ask('Hit a key to continue');
             }
-            $this->out('Email :' . $email['id']);
-            $this->preview($email);
+            $io->out('Email :' . $email['id']);
+            $this->preview($email, $io);
         }
+
+        return self::CODE_SUCCESS;
     }
 
     /**
      * Preview email
      *
      * @param array $e email data
+     * @param \Cake\Console\ConsoleIo $io IO
      * @return void
      */
-    public function preview($e)
+    public function preview(array $e, ConsoleIo $io): void
     {
         $configName = $e['config'];
         $template = $e['template'];
@@ -65,7 +65,7 @@ class PreviewShell extends Shell
             $email->setAttachments($e['attachments']);
         }
 
-        $email->setTransport('Debug')
+        $email->setTransport(new DebugTransport())
             ->setTo($e['email'])
             ->setSubject($e['subject'])
             ->setEmailFormat($e['format'])
@@ -81,18 +81,18 @@ class PreviewShell extends Shell
 
         $return = $email->deliver();
 
-        $this->out('Content:');
-        $this->hr();
-        $this->out($return['message']);
-        $this->hr();
-        $this->out('Headers:');
-        $this->hr();
-        $this->out($return['headers']);
-        $this->hr();
-        $this->out('Data:');
-        $this->hr();
+        $io->out('Content:');
+        $io->hr();
+        $io->out($return['message']);
+        $io->hr();
+        $io->out('Headers:');
+        $io->hr();
+        $io->out($return['headers']);
+        $io->hr();
+        $io->out('Data:');
+        $io->hr();
         debug($e['template_vars']);
-        $this->hr();
-        $this->out('');
+        $io->hr();
+        $io->out('');
     }
 }
