@@ -33,11 +33,9 @@ class PreviewCommand extends Command
             return $io->success('No emails found');
         }
 
-//        $this->clear();
         foreach ($emails as $i => $email) {
             if ($i) {
                 $io->ask('Hit a key to continue');
-//                $this->clear();
             }
             $io->out('Email :' . $email['id']);
             $this->preview($email, $io);
